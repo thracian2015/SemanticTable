@@ -1,3 +1,4 @@
 <DnaLibrary Name="Semantic Table" RuntimeVersion="v4.0">
   <ExternalLibrary Path="SemanticTable.dll" ExplicitExports="false" LoadFromBytes="true" Pack="true" />
+  <Reference Path="Newtonsoft.Json.dll" Pack="true" />
 </DnaLibrary>

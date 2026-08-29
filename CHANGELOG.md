@@ -6,6 +6,15 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0-beta.3] - 2026-08-29
+
+### Changed
+
+- Standardized the distributable filename as `SemanticTable-win-x64.xll` so future releases can replace the existing file without changing Excel's add-in registration.
+- Added the packed x64 XLL to the repository's `release` folder.
+
+## [0.1.0-beta.2] - 2026-08-29
+
 ### Changed
 
 - Renamed the project, solution, assembly, namespace, DNA manifest, and build outputs consistently to `SemanticTable`.
@@ -15,6 +24,8 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Expanded installation, authentication, licensing, build, screenshot, and known-limitation documentation.
 - Added contributor guidance and a release-specific Microsoft binary redistribution warning.
 - Removed the source-revision suffix from the About version and updated the copyright holder to Prologika, LLC.
+- Removed the unused ADOMD.NET implementation and NuGet dependency; documented the separately installed 64-bit MSOLAP runtime prerequisite.
+- Embedded required Office interop type metadata, packed Newtonsoft.Json, and produced a single-file unsigned x64 community artifact without Microsoft runtime DLLs.
 
 ## [0.1.0-beta.1] - 2026-08-29
 

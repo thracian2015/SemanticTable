@@ -1,6 +1,6 @@
 # Semantic Table
 
-Semantic Table 0.1.0-beta.1 is a Windows Excel add-in that gives Power BI connected query tables a PivotTable-like field picker. It reads semantic-model metadata, generates DAX, updates an Excel `QueryTable`, refreshes the table, and saves the selected fields and filters in the workbook.
+Semantic Table 0.1.0-beta.3 is a Windows Excel add-in that gives Power BI connected query tables a PivotTable-like field picker. It reads semantic-model metadata, generates DAX, updates an Excel `QueryTable`, refreshes the table, and saves the selected fields and filters in the workbook.
 
 This is beta software. Test it with non-production workbooks and semantic models before broader deployment.
 
@@ -17,30 +17,37 @@ This is beta software. Test it with non-production workbooks and semantic models
 
 Product screenshots have not yet been captured for the public beta. The repository reserves [`docs/screenshots`](docs/screenshots/README.md) for sanitized captures of the ribbon, Fields pane, connection dialog, and filtered output. Do not add screenshots containing tenant names, workspace names, semantic-model names, or workbook data.
 
-## Requirements
+## End-user prerequisites
 
-- Windows desktop Excel, 64-bit.
-- .NET Framework 4.8.
-- An existing Excel table connected to a Power BI semantic model, or a valid MSOLAP connection using placeholder-free values.
-- The Power BI tenant setting that permits live Excel connections.
-- Build permission on the semantic model, or at least Contributor access to its workspace.
-- A Power BI/Fabric license and capacity configuration that permits the user to access the semantic model from Excel.
+Install or confirm all of the following before loading Semantic Table:
+
+1. **64-bit Windows desktop Excel.** The add-in does not support 32-bit Excel, Excel for the web, or Excel for Mac.
+2. **.NET Framework 4.8 or later.** This is commonly present on supported Windows installations but remains a runtime requirement.
+3. **The latest 64-bit Microsoft Analysis Services OLE DB Provider (MSOLAP).** Download Microsoft’s current [MSOLAP (amd64) installer](https://go.microsoft.com/fwlink/?linkid=829576) and run the MSI. Microsoft’s [Analysis Services client-libraries page](https://learn.microsoft.com/en-us/analysis-services/client-libraries) lists the current version and installation instructions. Excel might already have installed MSOLAP, but Microsoft notes that the installed copy might not be current.
+4. **The Semantic Table XLL.** Download `SemanticTable-win-x64.xll` from the repository's `release` folder or the corresponding GitHub Release and add it through Excel’s Add-ins dialog.
+5. **An accessible Power BI semantic model.** Use an existing Excel table connected to the model, or provide a valid MSOLAP connection string.
+6. **Power BI permissions and licensing.** The tenant must allow live Excel connections; the user needs semantic-model Build permission or at least Contributor access to its workspace, plus a Power BI/Fabric license and capacity configuration that permits Excel access.
+
+Users do **not** need to install ADOMD.NET, Analysis Services Management Objects (AMO), Microsoft Identity libraries, the Office Interop NuGet assembly, Visual Studio, or Power BI Desktop specifically for Semantic Table.
 
 ## Installation
 
-There is no signed installer in the beta repository.
+There is no installer in the beta repository. Community releases use a single unsigned, packed x64 XLL.
 
-1. Obtain or build `SemanticTable64-packed.xll`.
-2. In Excel, open **File > Options > Add-ins**.
-3. At the bottom, select **Excel Add-ins**, choose **Go**, and then **Browse**.
-4. Select `SemanticTable64-packed.xll`.
-5. If Windows or organizational policy blocks the file, use only an approved trusted location or deployment method. Do not bypass endpoint-security policy.
+1. Download `SemanticTable-win-x64.xll` from the repository's `release` folder or the corresponding GitHub Release.
+2. Move it to a permanent local folder. Keep the filename unchanged so a later release can replace the file without changing Excel's add-in registration.
+3. In Excel, open **File > Options > Add-ins**.
+4. At the bottom, select **Excel Add-ins**, choose **Go**, and then **Browse**.
+5. Select the downloaded `.xll` file.
+6. If Windows or organizational policy blocks the file, use only an approved trusted location or deployment method. Do not bypass endpoint-security policy.
 
 The add-in appears on the **Semantic Table** ribbon tab. Select a cell in a supported connected table and choose **Fields**.
 
 ## Connections and authentication
 
 Semantic Table uses the live, authenticated MSOLAP/ADO connection associated with the Excel workbook. It does not implement a separate interactive sign-in flow and does not request or persist a separate Microsoft Entra access token.
+
+Semantic Table calls the native MSOLAP OLE DB provider directly through .NET Framework `System.Data.OleDb`. It does not use or require ADOMD.NET or Analysis Services Management Objects (AMO).
 
 For a new connection, the dialog starts with placeholders only:
 
@@ -86,6 +93,14 @@ The packed 64-bit output is:
 src\SemanticTable\bin\x64\Release\net48\publish\SemanticTable64-packed.xll
 ```
 
+For distribution, copy that packed output to the stable repository filename:
+
+```powershell
+Copy-Item src\SemanticTable\bin\x64\Release\net48\publish\SemanticTable64-packed.xll release\SemanticTable-win-x64.xll
+```
+
+The version remains embedded in the add-in and appears in the About window; it is intentionally omitted from the distributable filename so an update can replace the existing XLL in place.
+
 You can also open `SemanticTable.sln` in Visual Studio and build `Release | x64`.
 
 ## Known limitations
@@ -97,14 +112,14 @@ You can also open `SemanticTable.sln` in Visual Studio and build `Release | x64`
 - Column filters support typed dates, equality, inequality, text contains, ranges, and drag-and-drop placement. Measure filters and sort expressions are not implemented.
 - Calculation-group handling and explicit grain configuration are incomplete.
 - Large queries remain subject to Excel, Power BI/Fabric capacity, XMLA, timeout, and model limits.
-- The XLL is not currently code-signed or distributed through an installer.
-- The exact redistribution requirements for Microsoft binaries included in a packed XLL must be reviewed before publishing binaries.
+- The XLL is unsigned and is not distributed through an installer. Windows or organizational policy might block unsigned Office add-ins.
+- The XLL does not bundle MSOLAP. Users must install the latest 64-bit Microsoft Analysis Services OLE DB Provider separately.
 
 ## License, warranty, and dependencies
 
 Semantic Table source code is licensed under the [MIT License](LICENSE). The software is provided **as-is, without warranty of any kind, express or implied**.
 
-Third-party components are not relicensed under Semantic Table’s MIT license. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md), especially the Microsoft redistribution review required before publishing a packed binary.
+Third-party components are not relicensed under Semantic Table’s MIT license. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). The release XLL does not redistribute MSOLAP or the Microsoft Office Interop assembly.
 
 ## Project documentation
 

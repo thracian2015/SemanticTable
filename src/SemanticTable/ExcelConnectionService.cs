@@ -267,27 +267,6 @@ namespace SemanticTable
             return previous is Array ? new[] { dax } : (object)dax;
         }
 
-        public static string NormalizeForAdomd(string excelConnection)
-        {
-            var value = excelConnection ?? "";
-            if (value.StartsWith("OLEDB;", StringComparison.OrdinalIgnoreCase)) value = value.Substring(6);
-            var safeParts = value.Split(';').Where(p =>
-            {
-                var part = p.TrimStart();
-                return !part.StartsWith("Provider=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("Command Timeout=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("Integrated Security=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("Identity Provider=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("Password=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("PWD=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("User ID=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("UID=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("Access Token=", StringComparison.OrdinalIgnoreCase) &&
-                       !part.StartsWith("Interactive Login=", StringComparison.OrdinalIgnoreCase);
-            }).Where(p => !string.IsNullOrWhiteSpace(p));
-            return string.Join(";", safeParts) + ";Interactive Login=Always";
-        }
-
         public static string NormalizeForMsolap(string excelConnection)
         {
             var dataSource = GetProperty(excelConnection, "Data Source");

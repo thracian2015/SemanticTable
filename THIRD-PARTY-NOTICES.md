@@ -22,16 +22,6 @@ The upstream zlib notice must not be removed or altered from source distribution
 
 The upstream copyright and permission notice must be included with copies or substantial portions of Newtonsoft.Json. Refer to the upstream license for the complete controlling text.
 
-## Microsoft ADOMD.NET
-
-- Package: `Microsoft.AnalysisServices.AdomdClient` 19.114.12
-- Publisher and copyright holder: Microsoft Corporation
-- NuGet package: <https://www.nuget.org/packages/Microsoft.AnalysisServices.AdomdClient/19.114.12>
-- Package-referenced Microsoft terms: <https://go.microsoft.com/fwlink/?linkid=852895>
-- Microsoft redistribution guidance: <https://learn.microsoft.com/analysis-services/adomd/redistributing-adomd-net>
-
-ADOMD.NET is a Microsoft component and is not covered by Semantic Table’s MIT license. Microsoft’s redistribution documentation describes redistributing the appropriate ADOMD.NET version through the ADOMD.NET setup/client-library mechanism. Before publishing a packed XLL that embeds this assembly, verify that the intended packaging and distribution method is permitted by the exact package and Microsoft product terms applicable at that time.
-
 ## Microsoft Office Interop
 
 - Package: `Microsoft.Office.Interop.Excel` 15.0.4795.1001
@@ -40,8 +30,10 @@ ADOMD.NET is a Microsoft component and is not covered by Semantic Table’s MIT 
 
 Microsoft Office Interop is a Microsoft component and is not covered by Semantic Table’s MIT license. The package does not grant a Microsoft Office license. Before publishing a packed XLL that embeds any Interop assembly, verify the applicable Microsoft package, Office, and redistribution terms for the intended distribution method.
 
+Semantic Table uses the package as a compile-time interop definition and embeds the required interop types into its own assembly. The Microsoft Office Interop assembly is not intended to be included as a separate release binary or packed resource.
+
 ## Distribution review required
 
-The source repository may reference these packages for development and local builds. Do not infer from a successful Excel-DNA pack operation that every embedded binary may be redistributed under MIT. Complete a release-specific dependency inventory and legal/redistribution review before publishing binary artifacts.
+The source repository may reference these packages for development and local builds. Do not infer from a successful Excel-DNA pack operation that every embedded binary may be redistributed under MIT. Semantic Table requires the Microsoft Analysis Services OLE DB Provider (MSOLAP) to be installed separately and does not redistribute MSOLAP.
 
 Microsoft, Microsoft Excel, Microsoft Office, Microsoft Fabric, and Power BI are trademarks of the Microsoft group of companies. Their use identifies interoperability and does not imply endorsement.

@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Excel = Microsoft.Office.Interop.Excel;
-using Microsoft.AnalysisServices.AdomdClient;
 
 namespace SemanticTable
 {
@@ -332,65 +331,6 @@ namespace SemanticTable
                 }
             }
             return null;
-        }
-
-        private static IReadOnlyList<SemanticField> LoadFromInteractiveAdomd(ConnectedTableContext context)
-        {
-            var result = new List<SemanticField>();
-            try
-            {
-                using (var connection = new AdomdConnection(ExcelConnectionService.NormalizeForAdomd(context.ConnectionString)))
-                {
-                    connection.Open();
-                    var tables = ReadAdomdTables(connection);
-                    ReadAdomdFields(connection, tables, "$SYSTEM.TMSCHEMA_COLUMNS", SemanticFieldKind.Column, result);
-                    ReadAdomdFields(connection, tables, "$SYSTEM.TMSCHEMA_MEASURES", SemanticFieldKind.Measure, result);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException(
-                    "Microsoft interactive sign-in could not open the Power BI XMLA connection. " + ex.Message, ex);
-            }
-            result.Sort((a, b) => string.Compare(a.Table + "\0" + a.Name, b.Table + "\0" + b.Name, StringComparison.CurrentCultureIgnoreCase));
-            return result;
-        }
-
-        private static Dictionary<long, string> ReadAdomdTables(AdomdConnection connection)
-        {
-            var tables = new Dictionary<long, string>();
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = "SELECT [ID], [Name], [IsHidden] FROM $SYSTEM.TMSCHEMA_TABLES";
-                using (var reader = command.ExecuteReader())
-                    while (reader.Read())
-                        if (!AsBool(reader["IsHidden"]))
-                            tables[Convert.ToInt64(reader["ID"])] = Convert.ToString(reader["Name"]);
-            }
-            return tables;
-        }
-
-        private static void ReadAdomdFields(AdomdConnection connection, Dictionary<long, string> tables,
-            string rowset, SemanticFieldKind kind, ICollection<SemanticField> result)
-        {
-            using (var command = connection.CreateCommand())
-            {
-                command.CommandText = $"SELECT [TableID], [Name], [IsHidden], [DisplayFolder] FROM {rowset}";
-                using (var reader = command.ExecuteReader())
-                    while (reader.Read())
-                    {
-                        var tableId = Convert.ToInt64(reader["TableID"]);
-                        string table;
-                        if (!AsBool(reader["IsHidden"]) && tables.TryGetValue(tableId, out table))
-                            result.Add(new SemanticField
-                            {
-                                Table = table,
-                                Name = Convert.ToString(reader["Name"]),
-                                DisplayFolder = Convert.ToString(reader["DisplayFolder"]),
-                                Kind = kind
-                            });
-                    }
-            }
         }
 
         private static IReadOnlyList<SemanticField> LoadFromExcelNativeFallbacks(ConnectedTableContext context)
