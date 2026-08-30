@@ -13,6 +13,13 @@ This is beta software. Test it with non-production workbooks and semantic models
 - Restores the previous DAX command if refresh throws an error.
 - Stores table settings in hidden workbook-level names beginning with `_SemanticTable_`.
 
+## Video tutorials
+
+- [Introducing Semantic Table](https://youtu.be/0vctmajJzuk)
+- [Getting Started](https://youtu.be/RLVnWM1Ty74)
+- [Adding Connected Tables](https://youtu.be/VdI1p_iRWno)
+- [Working with Fields](https://youtu.be/Vxu9d2xlw0Q)
+
 ## Screenshots
 
 Product screenshots have not yet been captured for the public beta. The repository reserves [`docs/screenshots`](docs/screenshots/README.md) for sanitized captures of the ribbon, Fields pane, connection dialog, and filtered output. Do not add screenshots containing tenant names, workspace names, semantic-model names, or workbook data.
