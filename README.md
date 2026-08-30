@@ -22,7 +22,7 @@ This is beta software. Test it with non-production workbooks and semantic models
 
 ## Screenshots
 
-Product screenshots have not yet been captured for the public beta. The repository reserves [`docs/screenshots`](docs/screenshots/README.md) for sanitized captures of the ribbon, Fields pane, connection dialog, and filtered output. Do not add screenshots containing tenant names, workspace names, semantic-model names, or workbook data.
+![Semantic Table add-in in Excel](docs/screenshots/SemanticTable.png)
 
 ## End-user prerequisites
 
