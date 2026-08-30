@@ -1,0 +1,80 @@
+name: Publish release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish x64 XLL
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v6
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Validate release tag
+        shell: pwsh
+        run: |
+          [xml]$project = Get-Content -LiteralPath "src/SemanticTable/SemanticTable.csproj"
+          $versionNode = Select-Xml -Xml $project -XPath "/Project/PropertyGroup/Version"
+          $version = $versionNode.Node.InnerText
+          $expectedTag = "v$version"
+
+          if ("${{ github.ref_name }}" -ne $expectedTag) {
+            throw "Tag '${{ github.ref_name }}' does not match project version '$version'. Expected '$expectedTag'."
+          }
+
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Restore dependencies
+        run: dotnet restore SemanticTable.sln --nologo
+
+      - name: Build and pack x64 add-in
+        run: dotnet build SemanticTable.sln -c Release -p:Platform=x64 --no-restore --nologo
+
+      - name: Prepare release asset
+        shell: pwsh
+        run: |
+          $packedXll = "src/SemanticTable/bin/x64/Release/net48/publish/SemanticTable64-packed.xll"
+          $asset = Join-Path $env:RUNNER_TEMP "SemanticTable-win-x64.xll"
+
+          if (-not (Test-Path -LiteralPath $packedXll)) {
+            throw "Packed x64 XLL was not produced at '$packedXll'."
+          }
+
+          Copy-Item -LiteralPath $packedXll -Destination $asset -Force
+          $hash = (Get-FileHash -LiteralPath $asset -Algorithm SHA256).Hash
+          "RELEASE_ASSET=$asset" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "### Release asset`n`n- File: ``SemanticTable-win-x64.xll```n- SHA-256: ``$hash``" |
+            Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Create GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $arguments = @(
+            "release", "create", "${{ github.ref_name }}", $env:RELEASE_ASSET,
+            "--verify-tag",
+            "--title", "Semantic Table $env:RELEASE_VERSION",
+            "--generate-notes"
+          )
+
+          if ($env:RELEASE_VERSION.Contains("-")) {
+            $arguments += "--prerelease"
+          }
+
+          & gh @arguments
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub release creation failed with exit code $LASTEXITCODE."
+          }

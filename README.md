@@ -111,6 +111,21 @@ Create a versioned [GitHub Release](https://github.com/thracian2015/SemanticTabl
 
 You can also open `SemanticTable.sln` in Visual Studio and build `Release | x64`.
 
+### Automated GitHub releases
+
+The repository's `Publish release` GitHub Actions workflow builds and publishes the distributable automatically whenever a version tag is pushed.
+
+1. Update `Version`, `InformationalVersion`, and `FileVersion` in `src/SemanticTable/SemanticTable.csproj` and update `CHANGELOG.md`.
+2. Commit and push those changes.
+3. Create and push a tag that exactly matches the project version with a leading `v`:
+
+   ```powershell
+   git tag v0.1.0-beta.5
+   git push origin v0.1.0-beta.5
+   ```
+
+The workflow validates the tag, restores dependencies, builds `Release | x64`, packs the add-in, creates the GitHub Release, and uploads `SemanticTable-win-x64.xll`. Versions containing a hyphen, such as `-beta.5`, are published as prereleases. The workflow fails without publishing if the tag and project version do not match or the build does not produce the packed x64 XLL.
+
 ## Known limitations
 
 - The add-in targets 64-bit Windows desktop Excel and .NET Framework 4.8.

@@ -10,6 +10,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 - Moved binary distribution from the repository tree to downloadable GitHub Release assets.
 - Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
+- Added a tag-triggered GitHub Actions workflow that builds the x64 add-in and publishes the consistently named XLL release asset.
 
 ## [0.1.0-beta.4] - 2026-08-30
 
