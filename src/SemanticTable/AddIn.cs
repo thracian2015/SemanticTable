@@ -62,7 +62,8 @@ namespace SemanticTable
                 "\r\n\r\nCopyright (c) 2026 Prologika, LLC" +
                 "\r\nLicensed under the MIT License." +
                 "\r\n\r\nThis software is provided as-is, without warranty of any kind, express or implied." +
-                "\r\nSee LICENSE and THIRD-PARTY-NOTICES.md for details.",
+                "\r\nSee LICENSE and THIRD-PARTY-NOTICES.md for details." +
+                "\r\n\r\nGitHub: https://github.com/thracian2015/SemanticTable",
                 "About Semantic Table", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 

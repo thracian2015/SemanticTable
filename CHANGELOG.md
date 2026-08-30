@@ -6,6 +6,12 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0-beta.4] - 2026-08-30
+
+### Changed
+
+- Added the Semantic Table GitHub repository URL to the About window.
+
 ## [0.1.0-beta.3] - 2026-08-29
 
 ### Changed
