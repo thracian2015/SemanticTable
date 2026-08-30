@@ -6,6 +6,11 @@ The project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Moved binary distribution from the repository tree to downloadable GitHub Release assets.
+- Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
+
 ## [0.1.0-beta.4] - 2026-08-30
 
 ### Changed
@@ -17,7 +22,7 @@ The project follows [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Standardized the distributable filename as `SemanticTable-win-x64.xll` so future releases can replace the existing file without changing Excel's add-in registration.
-- Added the packed x64 XLL to the repository's `release` folder.
+- Standardized the packed x64 XLL as a GitHub Release asset.
 
 ## [0.1.0-beta.2] - 2026-08-29
 

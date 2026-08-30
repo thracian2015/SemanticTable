@@ -39,8 +39,6 @@ project.lock.json
 *-packed.xll
 *64-packed.xll
 *.dna.bak
-!release/
-!release/SemanticTable-win-x64.xll
 
 # Logs, diagnostics, and crash output
 *.log

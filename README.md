@@ -33,7 +33,7 @@ Install or confirm all of the following before loading Semantic Table:
 3. **The latest 64-bit Microsoft Analysis Services OLE DB Provider (MSOLAP).** Download Microsoft’s current [MSOLAP (amd64) installer](https://go.microsoft.com/fwlink/?linkid=829576) and run the MSI. Microsoft’s [Analysis Services client-libraries page](https://learn.microsoft.com/en-us/analysis-services/client-libraries) lists the current version and installation instructions. Excel might already have installed MSOLAP, but Microsoft notes that the installed copy might not be current.
 4. **Power BI permissions and licensing.** The semantic model must be published to a workspace covered by Power BI Premium per User (PPU) or Fabric licensing because the add-in connects using
 the model XMLA endpoint. The tenant must allow live Excel connections; the user needs semantic-model Build permission or at least Contributor access to its workspace.
-5. **The Semantic Table XLL.** Download `SemanticTable-win-x64.xll` from the repository's `release` folder or the corresponding GitHub Release and add it through Excel’s Add-ins dialog.
+5. **The Semantic Table XLL.** Download `SemanticTable-win-x64.xll` from [GitHub Releases](https://github.com/thracian2015/SemanticTable/releases) and add it through Excel’s Add-ins dialog.
 6. **An accessible Power BI semantic model.** Use an existing Excel table connected to the model, or create a new connected table provide a valid MSOLAP connection string.
 
 Users do **not** need to install ADOMD.NET, Analysis Services Management Objects (AMO), Microsoft Identity libraries, the Office Interop NuGet assembly, Visual Studio, or Power BI Desktop specifically for Semantic Table.
@@ -42,7 +42,7 @@ Users do **not** need to install ADOMD.NET, Analysis Services Management Objects
 
 There is no installer in the beta repository. Community releases use a single unsigned, packed x64 XLL.
 
-1. Download `SemanticTable-win-x64.xll` from the repository's `release` folder or the corresponding GitHub Release.
+1. Open [Semantic Table Releases](https://github.com/thracian2015/SemanticTable/releases), select the newest release, and download `SemanticTable-win-x64.xll` under **Assets**.
 2. Move it to a permanent local folder. Keep the filename unchanged so a later release can replace the file without changing Excel's add-in registration.
 3. In Excel, open **File > Options > Add-ins**.
 4. At the bottom, select **Excel Add-ins**, choose **Go**, and then **Browse**.
@@ -101,13 +101,13 @@ The packed 64-bit output is:
 src\SemanticTable\bin\x64\Release\net48\publish\SemanticTable64-packed.xll
 ```
 
-For distribution, copy that packed output to the stable repository filename:
+For distribution, copy that packed output to the stable release-asset filename:
 
 ```powershell
-Copy-Item src\SemanticTable\bin\x64\Release\net48\publish\SemanticTable64-packed.xll release\SemanticTable-win-x64.xll
+Copy-Item src\SemanticTable\bin\x64\Release\net48\publish\SemanticTable64-packed.xll SemanticTable-win-x64.xll
 ```
 
-The version remains embedded in the add-in and appears in the About window; it is intentionally omitted from the distributable filename so an update can replace the existing XLL in place.
+Create a versioned [GitHub Release](https://github.com/thracian2015/SemanticTable/releases) and upload `SemanticTable-win-x64.xll` under **Assets**. Do not commit the generated XLL to the source repository. The version remains embedded in the add-in and appears in the About window; it is intentionally omitted from the asset filename so an update can replace the existing XLL in place.
 
 You can also open `SemanticTable.sln` in Visual Studio and build `Release | x64`.
 
