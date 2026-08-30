@@ -23,9 +23,9 @@ Install or confirm all of the following before loading Semantic Table:
 
 1. **64-bit Windows desktop Excel.** The add-in does not support 32-bit Excel, Excel for the web, or Excel for Mac.
 2. **.NET Framework 4.8 or later.** This is commonly present on supported Windows installations but remains a runtime requirement. If you have an older version you can install it from here [.NET 4.8](https://dotnet.microsoft.com/en-us/download/dotnet-framework/thank-you/net48-web-installer).
-3. **Power BI permissions and licensing.** The semantic model must be published to a workspace covered by Power BI Premium per User (PPU) or Fabric licensing because the add-in connects using
+3. **The latest 64-bit Microsoft Analysis Services OLE DB Provider (MSOLAP).** Download Microsoft’s current [MSOLAP (amd64) installer](https://go.microsoft.com/fwlink/?linkid=829576) and run the MSI. Microsoft’s [Analysis Services client-libraries page](https://learn.microsoft.com/en-us/analysis-services/client-libraries) lists the current version and installation instructions. Excel might already have installed MSOLAP, but Microsoft notes that the installed copy might not be current.
+4. **Power BI permissions and licensing.** The semantic model must be published to a workspace covered by Power BI Premium per User (PPU) or Fabric licensing because the add-in connects using
 the model XMLA endpoint. The tenant must allow live Excel connections; the user needs semantic-model Build permission or at least Contributor access to its workspace.
-4. **The latest 64-bit Microsoft Analysis Services OLE DB Provider (MSOLAP).** Download Microsoft’s current [MSOLAP (amd64) installer](https://go.microsoft.com/fwlink/?linkid=829576) and run the MSI. Microsoft’s [Analysis Services client-libraries page](https://learn.microsoft.com/en-us/analysis-services/client-libraries) lists the current version and installation instructions. Excel might already have installed MSOLAP, but Microsoft notes that the installed copy might not be current.
 5. **The Semantic Table XLL.** Download `SemanticTable-win-x64.xll` from the repository's `release` folder or the corresponding GitHub Release and add it through Excel’s Add-ins dialog.
 6. **An accessible Power BI semantic model.** Use an existing Excel table connected to the model, or create a new connected table provide a valid MSOLAP connection string.
 
