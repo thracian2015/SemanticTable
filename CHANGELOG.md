@@ -12,6 +12,13 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
 - Added a tag-triggered GitHub Actions workflow that builds the x64 add-in and publishes the consistently named XLL release asset.
 
+## [0.1.0-beta.5] - 2026-09-08
+
+### Fixed
+
+- Made the connection dialog resizable and scaled its layout to keep the connection text and buttons visible.
+- Corrected Fields pane scaling, filter heading wrapping, and filter card sizing for larger display fonts.
+
 ## [0.1.0-beta.4] - 2026-08-30
 
 ### Changed
