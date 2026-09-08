@@ -80,6 +80,9 @@ namespace SemanticTable
 
         public FieldsPane()
         {
+            SuspendLayout();
+            AutoScaleDimensions = new SizeF(6F, 13F);
+            AutoScaleMode = AutoScaleMode.Font;
             _search.Text = "";
             _search.HandleCreated += (_, __) => SendMessage(_search.Handle, EmSetCueBanner, IntPtr.Zero, "Search fields");
             _icons.Images.Add("table", CreateTableIcon());
@@ -120,14 +123,15 @@ namespace SemanticTable
             };
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             bottom.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            bottom.RowStyles.Add(new RowStyle(SizeType.Absolute, 24));
+            bottom.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            _status.AutoSize = true;
             var bottomActions = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 AutoSize = true,
                 Margin = Padding.Empty,
                 Padding = Padding.Empty,
-                WrapContents = false
+                WrapContents = true
             };
             bottomActions.Controls.Add(_deferUpdate);
             bottomActions.Controls.Add(_apply);
@@ -135,21 +139,30 @@ namespace SemanticTable
             _status.Margin = new Padding(3, 0, 3, 0);
             bottom.Controls.Add(bottomActions, 0, 0);
             bottom.Controls.Add(_status, 0, 1);
-            var filterHost = new Panel { Dock = DockStyle.Fill };
-            filterHost.Controls.Add(_filters);
+            var filterHost = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, Margin = Padding.Empty
+            };
+            filterHost.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            filterHost.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            filterHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             filterHost.Controls.Add(new Label
             {
-                Text = "Filters â€” drag a column here (filter fields need not appear in output)",
-                Dock = DockStyle.Top, Height = 34, Padding = new Padding(6, 8, 3, 3), ForeColor = Color.DimGray
-            });
+                Text = "Filters — drag a column here (filter fields need not appear in output)",
+                Dock = DockStyle.Fill, AutoSize = true,
+                Padding = new Padding(6, 8, 3, 3), ForeColor = Color.DimGray
+            }, 0, 0);
+            filterHost.Controls.Add(_filters, 0, 1);
 
             var split = new SplitContainer
             {
                 Dock = DockStyle.Fill,
                 Orientation = Orientation.Horizontal,
                 SplitterWidth = 6,
-                Panel1MinSize = 80,
-                Panel2MinSize = 80
+                Size = new Size(350, 400),
+                SplitterDistance = 240,
+                Panel1MinSize = 60,
+                Panel2MinSize = 60
             };
             split.Panel1.Controls.Add(_tree);
             split.Panel2.Controls.Add(filterHost);
@@ -171,8 +184,8 @@ namespace SemanticTable
                 Dock = DockStyle.Fill, Height = 27, Margin = Padding.Empty,
                 Padding = Padding.Empty, ColumnCount = 2, RowCount = 1
             };
-            searchButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 31));
-            searchButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 31));
+            searchButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            searchButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             searchButtons.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             _refreshFields.Dock = DockStyle.Fill;
             _refreshFields.Margin = Padding.Empty;
@@ -185,7 +198,10 @@ namespace SemanticTable
             searchRow.Controls.Add(searchButtons, 1, 0);
 
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 27));
+            layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            searchRow.AutoSize = true;
+            searchRow.MinimumSize = new Size(0, 27);
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.Controls.Add(searchRow, 0, 0);
@@ -255,6 +271,7 @@ namespace SemanticTable
             };
             _filters.DragDrop += (_, e) => AddFilter(e.Data.GetData(typeof(SemanticField)) as SemanticField);
             _filters.ClientSizeChanged += (_, __) => ResizeFilterRows();
+            ResumeLayout(true);
         }
 
         public void AttachToSelection()
@@ -378,35 +395,8 @@ namespace SemanticTable
 
         private static string PromptForConnectionString(string current, bool creatingTable)
         {
-            using (var dialog = new Form
-            {
-                Text = creatingTable ? "Create Semantic Table connection" : "Semantic Table connection",
-                Width = 820,
-                Height = 285,
-                StartPosition = FormStartPosition.CenterScreen,
-                MinimizeBox = false,
-                MaximizeBox = false,
-                FormBorderStyle = FormBorderStyle.FixedDialog
-            })
-            {
-                var label = new Label
-                {
-                    Left = 12, Top = 12, Width = 780, Height = 52,
-                    Text = creatingTable
-                        ? "Enter the complete MSOLAP connection string for the semantic model. Replace <workspace> and <semantic-model> with actual values."
-                        : "Edit the complete connection string used by Semantic Table. Replace the <workspace> placeholder with the Power BI workspace name. This setting is saved for this table."
-                };
-                var textBox = new TextBox
-                {
-                    Left = 12, Top = 66, Width = 780, Height = 125, Text = current ?? "",
-                    Multiline = true, ScrollBars = ScrollBars.Vertical, AcceptsReturn = true
-                };
-                var ok = new Button { Text = "OK", Left = 636, Top = 205, Width = 75, DialogResult = DialogResult.OK };
-                var cancel = new Button { Text = "Cancel", Left = 717, Top = 205, Width = 75, DialogResult = DialogResult.Cancel };
-                dialog.Controls.Add(label); dialog.Controls.Add(textBox); dialog.Controls.Add(ok); dialog.Controls.Add(cancel);
-                dialog.AcceptButton = ok; dialog.CancelButton = cancel;
-                return dialog.ShowDialog() == DialogResult.OK ? textBox.Text.Trim() : null;
-            }
+            using (var dialog = new ConnectionDialog(current, creatingTable))
+                return dialog.ShowDialog() == DialogResult.OK ? dialog.ConnectionString.Trim() : null;
         }
 
         private static string ConnectionTemplate(string nativeConnection)
@@ -873,6 +863,7 @@ namespace SemanticTable
             var width = FilterRowWidth();
             foreach (Control control in _filters.Controls)
                 if (control is FilterRow row) row.Width = width;
+                else if (control is Label label) label.MaximumSize = new Size(width, 0);
         }
 
         private IReadOnlyList<string> LoadFilterValues(SemanticField field, bool descending, string search) =>

@@ -22,6 +22,9 @@ namespace SemanticTable
         public FilterRow(FieldFilter filter, Action<FieldFilter> remove,
             Func<SemanticField, bool, string, IReadOnlyList<string>> loadValues, Action changed, Action stateChanged)
         {
+            SuspendLayout();
+            AutoScaleDimensions = new SizeF(6F, 13F);
+            AutoScaleMode = AutoScaleMode.Font;
             _filter = filter;
             _loadValues = loadValues;
             _changed = changed;
@@ -109,6 +112,7 @@ namespace SemanticTable
             Controls.Add(_value1);
             Controls.Add(_value2);
             Controls.Add(_selectValues);
+            ResumeLayout(true);
         }
 
         private void UpdateValueControls()
