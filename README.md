@@ -1,6 +1,6 @@
 # Semantic Table
 
-Semantic Table 0.1.0-beta.4 is a Windows Excel add-in that gives Power BI connected query tables a PivotTable-like field picker. It reads semantic-model metadata, generates DAX, updates an Excel `QueryTable`, refreshes the table, and saves the selected fields and filters in the workbook.
+Semantic Table is a Windows Excel add-in that provides interactive regular Excel tables to Microsoft Fabric semantic models. It reads semantic-model metadata, generates DAX, updates an Excel `QueryTable`, refreshes the table, and saves the selected fields and filters in the workbook.
 
 This is beta software. Test it with non-production workbooks and semantic models before broader deployment.
 
@@ -9,7 +9,7 @@ This is beta software. Test it with non-production workbooks and semantic models
 - Opens a field pane for a Power BI semantic-model connected table.
 - Discovers visible model tables, columns, measures, and hierarchies.
 - Builds a bounded DAX query from selected fields and filters.
-- Refreshes the existing Excel table without replacing its `ListObject`.
+- Refreshes the existing Excel table without replacing its `ListObject`. You can defer the field changes or apply them immediately for full interactive experience similar to pivot reports.
 - Restores the previous DAX command if refresh throws an error.
 - Stores table settings in hidden workbook-level names beginning with `_SemanticTable_`.
 
