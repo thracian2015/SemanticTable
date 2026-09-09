@@ -49,9 +49,10 @@ namespace SemanticTable
             var clear = new Button
             {
                 Left = 295, Top = 3, Width = 30, Height = 25, FlatStyle = FlatStyle.Flat,
-                Image = CreateEraserIcon(), TabStop = false, AccessibleName = "Clear filter selection",
+                TabStop = false, AccessibleName = "Clear filter selection",
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
+            ScaledIcons.Bind(clear, CreateEraserIcon);
             clear.FlatAppearance.BorderSize = 0;
             var delete = new Button
             {
@@ -128,7 +129,7 @@ namespace SemanticTable
         private void ShowValuePicker()
         {
             var selected = new HashSet<string>(_filter.Values, StringComparer.CurrentCultureIgnoreCase);
-            using (var dialog = new Form
+            using (var dialog = new PopupDialog
             {
                 Text = "Select " + _filter.Field.Name + " values", Width = 560, Height = 520,
                 StartPosition = FormStartPosition.CenterParent, MinimizeBox = false, MaximizeBox = false
@@ -136,7 +137,7 @@ namespace SemanticTable
             {
                 IReadOnlyList<string> available = Array.Empty<string>();
                 string lastLoadKey = null;
-                var top = new TableLayoutPanel { Dock = DockStyle.Top, Height = 30, ColumnCount = 3, Padding = new Padding(2) };
+                var top = new TableLayoutPanel { Dock = DockStyle.Top, AutoSize = true, ColumnCount = 3, Padding = new Padding(2) };
                 top.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
                 top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
                 top.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 32));
@@ -148,16 +149,18 @@ namespace SemanticTable
                 var selectedOnly = new CheckBox
                 {
                     Appearance = Appearance.Button, Width = 30, Height = 28, Left = 8, Top = 7,
-                    FlatStyle = FlatStyle.Flat, Image = CreateSelectedOnlyIcon(), Text = string.Empty,
+                    FlatStyle = FlatStyle.Flat, Text = string.Empty,
                     TextAlign = ContentAlignment.MiddleCenter, ImageAlign = ContentAlignment.MiddleCenter,
                     AccessibleName = "Show selected values only"
                 };
+                ScaledIcons.Bind(selectedOnly, CreateSelectedOnlyIcon);
                 selectedOnly.FlatAppearance.BorderSize = 1;
                 var clearSelection = new Button
                 {
-                    Dock = DockStyle.Fill, FlatStyle = FlatStyle.Flat, Image = CreateEraserIcon(),
+                    Dock = DockStyle.Fill, FlatStyle = FlatStyle.Flat,
                     TabStop = false, AccessibleName = "Clear selection"
                 };
+                ScaledIcons.Bind(clearSelection, CreateEraserIcon);
                 clearSelection.FlatAppearance.BorderSize = 0;
                 var toolTip = new ToolTip();
                 toolTip.SetToolTip(clearSelection, "Clear selection");
@@ -166,13 +169,15 @@ namespace SemanticTable
                 top.Controls.Add(order, 1, 0);
                 top.Controls.Add(clearSelection, 2, 0);
                 var list = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true };
-                var bottom = new Panel { Dock = DockStyle.Bottom, Height = 42 };
-                var buttons = new FlowLayoutPanel { Dock = DockStyle.Right, Width = 190, FlowDirection = FlowDirection.RightToLeft };
-                var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Width = 80 };
-                var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Width = 80 };
+                var bottom = new TableLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, ColumnCount = 2, RowCount = 1 };
+                bottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.RightToLeft };
+                var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, AutoSize = true, Width = 80 };
+                var cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, AutoSize = true, Width = 80 };
                 buttons.Controls.Add(ok); buttons.Controls.Add(cancel);
-                bottom.Controls.Add(selectedOnly);
-                bottom.Controls.Add(buttons);
+                bottom.Controls.Add(selectedOnly, 0, 0);
+                bottom.Controls.Add(buttons, 1, 0);
                 dialog.Controls.Add(list); dialog.Controls.Add(top); dialog.Controls.Add(bottom);
                 dialog.AcceptButton = ok; dialog.CancelButton = cancel;
 
@@ -243,12 +248,13 @@ namespace SemanticTable
             }
         }
 
-        private static Bitmap CreateEraserIcon()
+        private static Bitmap CreateEraserIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var graphics = Graphics.FromImage(image))
             {
                 graphics.Clear(Color.Transparent);
+                graphics.ScaleTransform(size / 16F, size / 16F);
                 graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 using (var fill = new SolidBrush(Color.FromArgb(84, 132, 180)))
                 using (var end = new SolidBrush(Color.FromArgb(238, 164, 164)))
@@ -264,12 +270,13 @@ namespace SemanticTable
             return image;
         }
 
-        private static Bitmap CreateSelectedOnlyIcon()
+        private static Bitmap CreateSelectedOnlyIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var graphics = Graphics.FromImage(image))
             {
                 graphics.Clear(Color.Transparent);
+                graphics.ScaleTransform(size / 16F, size / 16F);
                 graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 using (var pen = new Pen(Color.FromArgb(55, 90, 125), 1.5f))
                 using (var fill = new SolidBrush(Color.FromArgb(84, 132, 180)))

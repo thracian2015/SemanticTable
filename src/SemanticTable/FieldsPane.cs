@@ -64,6 +64,7 @@ namespace SemanticTable
         };
         private readonly FlowLayoutPanel _filters = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoScroll = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, AllowDrop = true };
         private readonly HashSet<string> _checkedKeys = new HashSet<string>();
+        private readonly List<Bitmap> _iconSources = new List<Bitmap>();
         private readonly ImageList _icons = new ImageList { ImageSize = new Size(16, 16), ColorDepth = ColorDepth.Depth32Bit };
         private readonly ContextMenuStrip _fieldMenu = new ContextMenuStrip();
         private readonly ExcelAdoMetadataProvider _metadata = new ExcelAdoMetadataProvider();
@@ -85,14 +86,13 @@ namespace SemanticTable
             AutoScaleMode = AutoScaleMode.Font;
             _search.Text = "";
             _search.HandleCreated += (_, __) => SendMessage(_search.Handle, EmSetCueBanner, IntPtr.Zero, "Search fields");
-            _icons.Images.Add("table", CreateTableIcon());
-            _icons.Images.Add("folder", CreateFolderIcon());
-            _icons.Images.Add("hierarchy", CreateHierarchyIcon());
-            _icons.Images.Add("column", CreateColumnIcon());
-            _icons.Images.Add("measure", CreateMeasureIcon());
-            _workspace.Image = CreateConnectionIcon();
+            UpdateTreeIcons();
+            _tree.FontChanged += (_, __) => UpdateTreeIcons();
+            _tree.DpiChangedAfterParent += (_, __) => UpdateTreeIcons();
+            _tree.HandleCreated += (_, __) => UpdateTreeIcons();
+            ScaledIcons.Bind(_workspace, CreateConnectionIcon);
             _workspace.FlatAppearance.BorderSize = 0;
-            _refreshFields.Image = CreateRefreshIcon();
+            ScaledIcons.Bind(_refreshFields, CreateRefreshIcon);
             _refreshFields.FlatAppearance.BorderSize = 0;
             var toolTip = new ToolTip();
             toolTip.SetToolTip(_workspace, "Connection settings");
@@ -109,6 +109,8 @@ namespace SemanticTable
             Disposed += (_, __) =>
             {
                 try { if (_excelApp != null) _excelApp.SheetSelectionChange -= OnExcelSheetSelectionChange; } catch { }
+                _icons.Dispose();
+                foreach (var image in _iconSources) image.Dispose();
                 _fieldMenu.Dispose();
                 _autoApplyTimer.Dispose();
             };
@@ -435,11 +437,11 @@ namespace SemanticTable
             if (_context == null || _definition == null)
                 throw new InvalidOperationException("Open Semantic Table Fields for a connected table first.");
 
-            using (var dialog = new Form
+            using (var dialog = new PopupDialog
             {
                 Text = "Semantic Table Settings", Width = 480, Height = 250,
                 StartPosition = FormStartPosition.CenterScreen, MinimizeBox = false, MaximizeBox = false,
-                FormBorderStyle = FormBorderStyle.FixedDialog
+                FormBorderStyle = FormBorderStyle.Sizable
             })
             {
                 var grid = new DataGridView
@@ -451,9 +453,9 @@ namespace SemanticTable
                 grid.Columns.Add(new DataGridViewTextBoxColumn { Name = "Value", HeaderText = "Value" });
                 grid.Rows.Add("Row Limit", _definition.RowLimit.ToString());
 
-                var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, Height = 42, FlowDirection = FlowDirection.RightToLeft };
-                var ok = new Button { Text = "OK", Width = 80 };
-                var cancel = new Button { Text = "Cancel", Width = 80, DialogResult = DialogResult.Cancel };
+                var buttons = new FlowLayoutPanel { Dock = DockStyle.Bottom, AutoSize = true, FlowDirection = FlowDirection.RightToLeft };
+                var ok = new Button { Text = "OK", AutoSize = true, Width = 80 };
+                var cancel = new Button { Text = "Cancel", AutoSize = true, Width = 80, DialogResult = DialogResult.Cancel };
                 buttons.Controls.Add(ok); buttons.Controls.Add(cancel);
                 dialog.Controls.Add(grid); dialog.Controls.Add(buttons);
                 dialog.CancelButton = cancel;
@@ -879,13 +881,37 @@ namespace SemanticTable
             }
         }
 
-        private static Bitmap CreateConnectionIcon()
+        private void UpdateTreeIcons()
         {
-            var image = new Bitmap(16, 16);
+            var size = ScaledIcons.SizeFor(_tree);
+            if (_icons.ImageSize.Width == size && _icons.Images.Count != 0) return;
+            _icons.Images.Clear();
+            foreach (var image in _iconSources) image.Dispose();
+            _iconSources.Clear();
+            _icons.ImageSize = new Size(size, size);
+            AddTreeIcon("table", CreateTableIcon(size));
+            AddTreeIcon("folder", CreateFolderIcon(size));
+            AddTreeIcon("hierarchy", CreateHierarchyIcon(size));
+            AddTreeIcon("column", CreateColumnIcon(size));
+            AddTreeIcon("measure", CreateMeasureIcon(size));
+        }
+
+        private void AddTreeIcon(string key, Bitmap image)
+        {
+            // ImageList can recreate its native handle on DPI/theme changes.
+            // Keep the source bitmaps alive until the list no longer references them.
+            _iconSources.Add(image);
+            _icons.Images.Add(key, image);
+        }
+
+        private static Bitmap CreateConnectionIcon(int size)
+        {
+            var image = new Bitmap(size, size);
             using (var g = Graphics.FromImage(image))
             using (var pen = new Pen(Color.FromArgb(55, 90, 125), 1.6f))
             {
                 g.Clear(Color.Transparent);
+                g.ScaleTransform(size / 16F, size / 16F);
                 g.DrawLine(pen, 5, 1, 5, 5);
                 g.DrawLine(pen, 11, 1, 11, 5);
                 g.DrawRectangle(pen, 3, 5, 10, 5);
@@ -895,27 +921,29 @@ namespace SemanticTable
             return image;
         }
 
-        private static Bitmap CreateRefreshIcon()
+        private static Bitmap CreateRefreshIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var g = Graphics.FromImage(image))
             using (var pen = new Pen(Color.FromArgb(16, 124, 65), 1.7f))
             using (var brush = new SolidBrush(Color.FromArgb(16, 124, 65)))
             {
                 g.Clear(Color.Transparent);
+                g.ScaleTransform(size / 16F, size / 16F);
                 g.DrawArc(pen, 2, 2, 11, 11, 35, 285);
                 g.FillPolygon(brush, new[] { new Point(12, 1), new Point(15, 5), new Point(10, 5) });
             }
             return image;
         }
 
-        private static Bitmap CreateTableIcon()
+        private static Bitmap CreateTableIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var g = Graphics.FromImage(image))
             using (var pen = new Pen(Color.DimGray))
             {
                 g.Clear(Color.Transparent);
+                g.ScaleTransform(size / 16F, size / 16F);
                 g.DrawRectangle(pen, 1, 2, 13, 12);
                 g.DrawLine(pen, 1, 6, 14, 6);
                 g.DrawLine(pen, 5, 2, 5, 14);
@@ -924,13 +952,14 @@ namespace SemanticTable
             return image;
         }
 
-        private static Bitmap CreateColumnIcon()
+        private static Bitmap CreateColumnIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var g = Graphics.FromImage(image))
             using (var pen = new Pen(Color.SteelBlue))
             {
                 g.Clear(Color.Transparent);
+                g.ScaleTransform(size / 16F, size / 16F);
                 g.DrawRectangle(pen, 3, 1, 9, 14);
                 g.DrawLine(pen, 3, 5, 12, 5);
                 g.DrawLine(pen, 3, 9, 12, 9);
@@ -938,14 +967,15 @@ namespace SemanticTable
             return image;
         }
 
-        private static Bitmap CreateFolderIcon()
+        private static Bitmap CreateFolderIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var g = Graphics.FromImage(image))
             using (var pen = new Pen(Color.Goldenrod))
             using (var brush = new SolidBrush(Color.FromArgb(255, 224, 130)))
             {
                 g.Clear(Color.Transparent);
+                g.ScaleTransform(size / 16F, size / 16F);
                 g.FillRectangle(brush, 1, 5, 14, 9);
                 g.FillRectangle(brush, 2, 3, 6, 3);
                 g.DrawRectangle(pen, 1, 5, 14, 9);
@@ -955,14 +985,15 @@ namespace SemanticTable
             return image;
         }
 
-        private static Bitmap CreateMeasureIcon()
+        private static Bitmap CreateMeasureIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var g = Graphics.FromImage(image))
             using (var pen = new Pen(Color.SeaGreen))
             using (var brush = new SolidBrush(Color.SeaGreen))
             {
                 g.Clear(Color.Transparent);
+                g.ScaleTransform(size / 16F, size / 16F);
                 g.DrawRectangle(pen, 2, 1, 11, 14);
                 g.DrawRectangle(pen, 4, 3, 7, 3);
                 g.FillRectangle(brush, 4, 8, 2, 2);
@@ -973,14 +1004,15 @@ namespace SemanticTable
             return image;
         }
 
-        private static Bitmap CreateHierarchyIcon()
+        private static Bitmap CreateHierarchyIcon(int size)
         {
-            var image = new Bitmap(16, 16);
+            var image = new Bitmap(size, size);
             using (var g = Graphics.FromImage(image))
             using (var pen = new Pen(Color.MediumPurple))
             using (var brush = new SolidBrush(Color.MediumPurple))
             {
                 g.Clear(Color.Transparent);
+                g.ScaleTransform(size / 16F, size / 16F);
                 g.DrawLine(pen, 4, 3, 4, 12);
                 g.DrawLine(pen, 4, 6, 11, 6);
                 g.DrawLine(pen, 4, 11, 11, 11);

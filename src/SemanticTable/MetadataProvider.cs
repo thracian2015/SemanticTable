@@ -179,17 +179,25 @@ namespace SemanticTable
         private static string SelectCatalog(IReadOnlyList<string> catalogs)
         {
             if (catalogs.Count == 1) return catalogs[0];
-            using (var dialog = new Form { Text = "Select Power BI semantic model", Width = 520, Height = 165,
-                StartPosition = FormStartPosition.CenterScreen, FormBorderStyle = FormBorderStyle.FixedDialog,
+            using (var dialog = new PopupDialog { Text = "Select Power BI semantic model", Width = 520, Height = 165,
+                StartPosition = FormStartPosition.CenterScreen, FormBorderStyle = FormBorderStyle.Sizable,
                 MinimizeBox = false, MaximizeBox = false })
             {
-                var label = new Label { Left = 12, Top = 12, Width = 480, Text = "Select the semantic model used by this connected table:" };
-                var combo = new ComboBox { Left = 12, Top = 38, Width = 480, DropDownStyle = ComboBoxStyle.DropDownList };
+                var label = new Label { Dock = DockStyle.Fill, AutoSize = true, Text = "Select the semantic model used by this connected table:" };
+                var combo = new ComboBox { Dock = DockStyle.Top, DropDownStyle = ComboBoxStyle.DropDownList };
                 combo.Items.AddRange(catalogs.Cast<object>().ToArray());
                 if (combo.Items.Count > 0) combo.SelectedIndex = 0;
-                var ok = new Button { Text = "OK", Left = 336, Top = 74, Width = 75, DialogResult = DialogResult.OK };
-                var cancel = new Button { Text = "Cancel", Left = 417, Top = 74, Width = 75, DialogResult = DialogResult.Cancel };
-                dialog.Controls.Add(label); dialog.Controls.Add(combo); dialog.Controls.Add(ok); dialog.Controls.Add(cancel);
+                var ok = new Button { Text = "OK", AutoSize = true, Width = 75, DialogResult = DialogResult.OK };
+                var cancel = new Button { Text = "Cancel", AutoSize = true, Width = 75, DialogResult = DialogResult.Cancel };
+                var layout = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(12) };
+                layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+                layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.RightToLeft };
+                buttons.Controls.Add(cancel); buttons.Controls.Add(ok);
+                layout.Controls.Add(label, 0, 0); layout.Controls.Add(combo, 0, 1); layout.Controls.Add(buttons, 0, 2);
+                dialog.Controls.Add(layout);
                 dialog.AcceptButton = ok; dialog.CancelButton = cancel;
                 return dialog.ShowDialog() == DialogResult.OK ? Convert.ToString(combo.SelectedItem) : null;
             }
