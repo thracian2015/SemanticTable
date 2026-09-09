@@ -42,12 +42,12 @@ Users do **not** need to install ADOMD.NET, Analysis Services Management Objects
 
 There is no installer in the beta repository. Community releases use a single unsigned, packed x64 XLL.
 
-1. Open [Semantic Table Releases](https://github.com/thracian2015/SemanticTable/releases), select the newest release, and download `SemanticTable-win-x64.xll` under **Assets**.
+1. Open [Semantic Table Releases](https://github.com/thracian2015/SemanticTable/releases), view the newest (top) release, and download `SemanticTable-win-x64.xll` under **Assets**.
 2. Move it to a permanent local folder. Keep the filename unchanged so a later release can replace the file without changing Excel's add-in registration.
 3. In Excel, open **File > Options > Add-ins**.
 4. At the bottom, select **Excel Add-ins**, choose **Go**, and then **Browse**.
 5. Select the downloaded `.xll` file.
-6. If Windows or organizational policy blocks the file, use only an approved trusted location or deployment method. Do not bypass endpoint-security policy.
+6. If Excel fails to load the add-in, close Excel, right-click the downloaded `.xll` file in File Explorer, select **Properties**, click **Unblock** (if shown), and click **Apply**, then **OK**. Reopen Excel and try loading the add-in again.
 
 The add-in appears on the **Semantic Table** ribbon tab. Select a cell in a supported connected table and choose **Fields**.
 

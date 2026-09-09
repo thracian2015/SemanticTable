@@ -65,6 +65,18 @@ namespace SemanticTable
             clear.Click += (_, __) => ClearSelection();
             delete.Click += (_, __) => remove(filter);
 
+            _mode.DrawMode = DrawMode.OwnerDrawFixed;
+            _mode.DrawItem += (_, e) =>
+            {
+                e.DrawBackground();
+                if (e.Index >= 0)
+                    TextRenderer.DrawText(e.Graphics, Convert.ToString(_mode.Items[e.Index]), e.Font,
+                        e.Bounds, e.ForeColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+                e.DrawFocusRectangle();
+            };
+            _mode.HandleCreated += (_, __) => MatchModeHeight();
+            _mode.FontChanged += (_, __) => MatchModeHeight();
+            _selectValues.SizeChanged += (_, __) => MatchModeHeight();
             _mode.Left = 8;
             _mode.Top = 35;
             _mode.Items.AddRange(new object[] { "Basic", "Advanced" });
@@ -114,6 +126,15 @@ namespace SemanticTable
             Controls.Add(_value2);
             Controls.Add(_selectValues);
             ResumeLayout(true);
+            MatchModeHeight();
+        }
+
+        private void MatchModeHeight()
+        {
+            // DropDownList ignores Height. Owner-drawn ItemHeight controls its closed height.
+            var itemHeight = Math.Max(1, Math.Min(255,
+                _mode.ItemHeight + _selectValues.Height - _mode.Height));
+            if (_mode.ItemHeight != itemHeight) _mode.ItemHeight = itemHeight;
         }
 
         private void UpdateValueControls()

@@ -12,6 +12,17 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
 - Added a tag-triggered GitHub Actions workflow that builds the x64 add-in and publishes the consistently named XLL release asset.
 
+## [0.1.0-beta.8] - 2026-09-09
+
+### Fixed
+
+- Match the filter mode dropdown height to the Select values button.
+- Exclude nested build artifacts from project inputs so Release builds package the correct add-in.
+
+### Changed
+
+- Clarify newest-release selection and file Properties > Unblock installation instructions.
+
 ## [0.1.0-beta.7] - 2026-09-08
 
 ### Fixed
