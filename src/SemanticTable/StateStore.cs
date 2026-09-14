@@ -13,6 +13,15 @@ namespace SemanticTable
         private const string Prefix = "_SemanticTable_";
         private const string ConnectionName = "_SemanticTable_Connection_";
         private const string CatalogName = "_SemanticTable_XmlaCatalog_";
+        private const string TableStateMarker = "\n[SemanticTable state]\n";
+
+        private static Excel.ListObject FindTable(Excel.Workbook workbook, string tableName)
+        {
+            foreach (Excel.Worksheet sheet in workbook.Worksheets)
+                foreach (Excel.ListObject table in sheet.ListObjects)
+                    if (string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) return table;
+            return null;
+        }
 
         private sealed class CompactDefinition
         {
@@ -40,7 +49,10 @@ namespace SemanticTable
             try
             {
                 var nameText = Prefix + tableName;
-                var stored = LoadStringName(workbook, nameText);
+                var alternativeText = FindTable(workbook, tableName)?.AlternativeText ?? string.Empty;
+                var marker = alternativeText.LastIndexOf(TableStateMarker, StringComparison.Ordinal);
+                var stored = marker >= 0 ? alternativeText.Substring(marker + TableStateMarker.Length)
+                    : LoadStringName(workbook, nameText);
                 if (string.IsNullOrEmpty(stored)) throw new InvalidOperationException("No saved table definition exists.");
 
                 // Read compatibility for the short-lived 1.9.0 chunked format.
@@ -61,14 +73,18 @@ namespace SemanticTable
 
                 var root = JObject.Parse(stored);
                 if (root.Property("v") == null)
-                    return JsonConvert.DeserializeObject<TableDefinition>(stored);
+                {
+                    var legacy = JsonConvert.DeserializeObject<TableDefinition>(stored);
+                    legacy.ExcelTableName = tableName;
+                    return legacy;
+                }
 
                 var compact = root.ToObject<CompactDefinition>();
                 return new TableDefinition
                 {
                     Version = compact.Version,
                     DatasetId = compact.DatasetId,
-                    ExcelTableName = compact.ExcelTableName ?? tableName,
+                    ExcelTableName = tableName,
                     Fields = (compact.SelectedFieldKeys ?? new List<string>()).Select(FieldFromKey).Where(f => f != null).ToList(),
                     Filters = (compact.Filters ?? new List<CompactFilter>()).Select(f => new FieldFilter
                     {
@@ -110,7 +126,14 @@ namespace SemanticTable
                 DeferUpdate = definition.DeferUpdate
             };
 
-            SaveStringName(workbook, nameText, JsonConvert.SerializeObject(compact, Formatting.None));
+            // Table metadata survives rename, copy and workbook save. Preserve the user's description.
+            var table = FindTable(workbook, definition.ExcelTableName)
+                ?? throw new InvalidOperationException("The table to save could not be found.");
+            var alternativeText = table.AlternativeText ?? string.Empty;
+            var marker = alternativeText.LastIndexOf(TableStateMarker, StringComparison.Ordinal);
+            if (marker >= 0) alternativeText = alternativeText.Substring(0, marker);
+            table.AlternativeText = alternativeText + TableStateMarker + JsonConvert.SerializeObject(compact, Formatting.None);
+            try { workbook.Names.Item(nameText).Delete(); } catch { }
             for (var index = 1; index <= previousCount; index++)
                 try { workbook.Names.Item(StatePartName(definition.ExcelTableName, index)).Delete(); } catch { }
         }

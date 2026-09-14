@@ -315,7 +315,6 @@ namespace SemanticTable
                 var datasetId = ExcelConnectionService.GetModelIdentity(savedConnection);
                 step = "loading saved field state";
                 _definition = StateStore.Load(app.ActiveWorkbook, _context.Table.Name);
-                var resetModelState = false;
                 if (_definition.Version < 2)
                 {
                     if (_definition.RowLimit == 10000) _definition.RowLimit = 500000;
@@ -336,13 +335,11 @@ namespace SemanticTable
                     _definition.Filters = new List<FieldFilter>();
                     _definition.DatasetId = datasetId;
                     _definition.Version = 4;
-                    resetModelState = true;
                 }
                 if (_definition.Version < 5)
                 {
                     _definition.DeferUpdate = true;
                     _definition.Version = 5;
-                    resetModelState = true;
                 }
                 _loadingState = true;
                 _deferUpdate.Checked = _definition.DeferUpdate;
@@ -357,8 +354,8 @@ namespace SemanticTable
                 if (queryFields.Count > 0)
                     _definition.Fields = queryFields;
                 if (_definition.Filters == null) _definition.Filters = new List<FieldFilter>();
-                var removedFilters = ReconcileFilters();
-                if (resetModelState || removedFilters > 0) StateStore.Save(app.ActiveWorkbook, _definition);
+                ReconcileFilters();
+                StateStore.Save(workbook, _definition);
                 _checkedKeys.Clear();
                 foreach (var field in _definition.Fields) _checkedKeys.Add(field.Key);
                 step = "populating the Fields pane";
@@ -825,7 +822,7 @@ namespace SemanticTable
         {
             _definition.Filters.Remove(filter);
             RenderFilters();
-            ScheduleAutoApply();
+            FilterChanged();
         }
 
         private void RenderFilters()
@@ -837,7 +834,7 @@ namespace SemanticTable
                 if (filter.Field == null) continue;
                 var current = _allFields.FirstOrDefault(f => f.Key == filter.Field.Key);
                 if (current != null) filter.Field = current;
-                var row = new FilterRow(filter, RemoveFilter, LoadFilterValues, ScheduleAutoApply, SaveFilterUiState)
+                var row = new FilterRow(filter, RemoveFilter, LoadFilterValues, FilterChanged, SaveFilterUiState)
                 {
                     Width = FilterRowWidth()
                 };
@@ -871,13 +868,19 @@ namespace SemanticTable
         private IReadOnlyList<string> LoadFilterValues(SemanticField field, bool descending, string search) =>
             _metadata.LoadDistinctValues(_context, field, 500, descending, search);
 
+        private void FilterChanged()
+        {
+            SaveFilterUiState();
+            ScheduleAutoApply();
+        }
+
         private void SaveFilterUiState()
         {
             try { SaveDefinition(); }
             catch (Exception ex)
             {
                 DiagnosticLog.Write("Could not save filter UI state: " + ex);
-                ShowError(new InvalidOperationException("Could not save the filter mode. " + ExceptionDetails(ex), ex));
+                ShowError(new InvalidOperationException("Could not save the filters. " + ExceptionDetails(ex), ex));
             }
         }
 

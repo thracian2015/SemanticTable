@@ -12,6 +12,13 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
 - Added a tag-triggered GitHub Actions workflow that builds the x64 add-in and publishes the consistently named XLL release asset.
 
+## [0.1.0-beta.9] - 2026-09-14
+
+### Fixed
+
+- Store filter definitions with the Excel table so they survive table copies, renames, and workbook save/reopen; migrate existing saved definitions when Fields is opened.
+- Save filter selections, conditions, and removals immediately, including when Defer update is enabled.
+
 ## [0.1.0-beta.8] - 2026-09-09
 
 ### Fixed
