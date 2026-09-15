@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -150,7 +150,7 @@ namespace SemanticTable
             filterHost.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             filterHost.Controls.Add(new Label
             {
-                Text = "Filters � drag a column here (filter fields need not appear in output)",
+                Text = "Filters \u2014 drag a column here (filter fields need not appear in output)",
                 Dock = DockStyle.Fill, AutoSize = true,
                 Padding = new Padding(6, 8, 3, 3), ForeColor = Color.DimGray
             }, 0, 0);
@@ -345,7 +345,7 @@ namespace SemanticTable
                 _deferUpdate.Checked = _definition.DeferUpdate;
                 _apply.Enabled = _definition.DeferUpdate;
                 _loadingState = false;
-                _status.Text = "Loading model fields…";
+                _status.Text = "Loading model fields\u2026";
                 step = "reading semantic-model metadata";
                 _allFields = _metadata.Load(_context);
                 _hierarchies = _metadata.Hierarchies;
@@ -499,7 +499,7 @@ namespace SemanticTable
                 var previousDatasetId = _definition.DatasetId;
                 _context.ConnectionString = connection;
                 var datasetId = ExcelConnectionService.GetModelIdentity(connection);
-                _status.Text = "Loading model fields…";
+                _status.Text = "Loading model fields\u2026";
                 _allFields = _metadata.Load(_context);
                 _hierarchies = _metadata.Hierarchies;
                 if (!string.Equals(previousDatasetId, datasetId, StringComparison.OrdinalIgnoreCase))
@@ -740,13 +740,13 @@ namespace SemanticTable
                 _apply.Enabled = false;
                 var selected = _allFields.Where(f => _checkedKeys.Contains(f.Key)).ToList();
                 dax = DaxQueryBuilder.Build(selected, _definition.Filters, _definition.RowLimit);
-                _status.Text = "Refreshing…";
+                _status.Text = "Refreshing\u2026";
                 ExcelConnectionService.ApplyAndRefresh(_context, dax, selected.Count);
                 _definition.Fields = selected;
                 DiagnosticLog.Write("Saving table definition after successful refresh.");
                 SaveDefinition();
                 DiagnosticLog.Write("Table definition saved successfully.");
-                _status.Text = $"{selected.Count} selected, {_definition.Filters.Count} filters — updated {DateTime.Now:t}";
+                _status.Text = $"{selected.Count} selected, {_definition.Filters.Count} filters \u2014 updated {DateTime.Now:t}";
             }
             catch (Exception ex)
             {
@@ -771,6 +771,7 @@ namespace SemanticTable
             return _definition.Filters.All(filter =>
             {
                 if (filter?.Field == null) return false;
+                if (DaxQueryBuilder.IsBlankOperator(filter)) return true;
                 if (string.Equals(filter.Mode, "Basic", StringComparison.OrdinalIgnoreCase))
                     return true;
                 if (string.IsNullOrWhiteSpace(filter.Value))

@@ -12,6 +12,31 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
 - Added a tag-triggered GitHub Actions workflow that builds the x64 add-in and publishes the consistently named XLL release asset.
 
+## [0.1.0-beta.13] - 2026-09-14
+
+### Changed
+
+- Reduce empty space below filter controls; expand filter cards only when Between needs a second value.
+
+## [0.1.0-beta.12] - 2026-09-14
+
+### Added
+
+- Clickable Prologika and GitHub URLs in the About dialog, with Prologika directly below the copyright notice.
+
+## [0.1.0-beta.11] - 2026-09-14
+
+### Fixed
+
+- Correct mixed source encoding that displayed garbled punctuation in the Fields pane and refresh status.
+- Match heights across filter mode, operator, text/date inputs, and Select values controls at different display scales.
+
+## [0.1.0-beta.10] - 2026-09-14
+
+### Added
+
+- Advanced Is Blank and Is Not Blank filters using ISBLANK, with value entry disabled for both operators.
+
 ## [0.1.0-beta.9] - 2026-09-14
 
 ### Fixed

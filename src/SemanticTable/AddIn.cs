@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using ExcelDna.Integration;
 using ExcelDna.Integration.CustomUI;
 using System;
@@ -56,15 +56,7 @@ namespace SemanticTable
             var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
                 ?? assembly.GetName().Version?.ToString(3);
             if (!string.IsNullOrEmpty(version)) version = version.Split('+')[0];
-            MessageBox.Show(
-                "Semantic Table\r\nVersion " + version +
-                "\r\n\r\nBuild and filter regular Excel connected tables from Power BI semantic models." +
-                "\r\n\r\nCopyright (c) 2026 Prologika, LLC" +
-                "\r\nLicensed under the MIT License." +
-                "\r\n\r\nThis software is provided as-is, without warranty of any kind, express or implied." +
-                "\r\nSee LICENSE and THIRD-PARTY-NOTICES.md for details." +
-                "\r\n\r\nGitHub: https://github.com/thracian2015/SemanticTable",
-                "About Semantic Table", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            using (var dialog = AboutDialog.Create(version)) dialog.ShowDialog();
         }
 
         public void ShowSettings(IRibbonControl control)

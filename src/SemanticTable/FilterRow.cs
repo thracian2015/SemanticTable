@@ -18,6 +18,7 @@ namespace SemanticTable
         private readonly Action _changed;
         private readonly Action _stateChanged;
         private bool _updatingValues;
+        private bool _matchingHeights;
 
         public FilterRow(FieldFilter filter, Action<FieldFilter> remove,
             Func<SemanticField, bool, string, IReadOnlyList<string>> loadValues, Action changed, Action stateChanged)
@@ -65,15 +66,19 @@ namespace SemanticTable
             clear.Click += (_, __) => ClearSelection();
             delete.Click += (_, __) => remove(filter);
 
-            _mode.DrawMode = DrawMode.OwnerDrawFixed;
-            _mode.DrawItem += (_, e) =>
+            foreach (var combo in new[] { _mode, _operator })
             {
-                e.DrawBackground();
-                if (e.Index >= 0)
-                    TextRenderer.DrawText(e.Graphics, Convert.ToString(_mode.Items[e.Index]), e.Font,
-                        e.Bounds, e.ForeColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
-                e.DrawFocusRectangle();
-            };
+                combo.DrawMode = DrawMode.OwnerDrawFixed;
+                combo.DrawItem += (_, e) =>
+                {
+                    e.DrawBackground();
+                    if (e.Index >= 0)
+                        TextRenderer.DrawText(e.Graphics, Convert.ToString(combo.Items[e.Index]), e.Font,
+                            e.Bounds, e.ForeColor, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPrefix);
+                    e.DrawFocusRectangle();
+                };
+                combo.HandleCreated += (_, __) => MatchModeHeight();
+            }
             _mode.HandleCreated += (_, __) => MatchModeHeight();
             _mode.FontChanged += (_, __) => MatchModeHeight();
             _selectValues.SizeChanged += (_, __) => MatchModeHeight();
@@ -95,6 +100,7 @@ namespace SemanticTable
                 var previousCondition = DaxQueryBuilder.ConditionSignature(_filter);
                 _filter.Mode = Convert.ToString(_mode.SelectedItem);
                 if (_filter.Mode == "Basic") _filter.Operator = "Equals";
+                else _filter.Operator = Convert.ToString(_operator.SelectedItem);
                 UpdateValueControls();
                 if (!string.Equals(previousCondition, DaxQueryBuilder.ConditionSignature(_filter), StringComparison.Ordinal))
                     _changed?.Invoke();
@@ -103,6 +109,7 @@ namespace SemanticTable
             };
             _operator.SelectedIndexChanged += (_, __) =>
             {
+                if (_updatingValues) return;
                 var previousCondition = DaxQueryBuilder.ConditionSignature(_filter);
                 _filter.Operator = Convert.ToString(_operator.SelectedItem);
                 UpdateValueControls();
@@ -131,10 +138,30 @@ namespace SemanticTable
 
         private void MatchModeHeight()
         {
-            // DropDownList ignores Height. Owner-drawn ItemHeight controls its closed height.
-            var itemHeight = Math.Max(1, Math.Min(255,
-                _mode.ItemHeight + _selectValues.Height - _mode.Height));
-            if (_mode.ItemHeight != itemHeight) _mode.ItemHeight = itemHeight;
+            if (_matchingHeights || _value1 == null || _value2 == null) return;
+            _matchingHeights = true;
+            try
+            {
+                // Native date pickers have a fixed height for their font. Use that
+                // height for every field, including text and basic-filter buttons.
+                int height;
+                using (var picker = new DateTimePicker { Font = Font }) height = picker.Height;
+                _selectValues.Height = height;
+                foreach (var combo in new[] { _mode, _operator })
+                    combo.ItemHeight = Math.Max(1, Math.Min(255, combo.ItemHeight + height - combo.Height));
+                _value1.Height = height;
+                _value2.Height = height;
+                var between = _filter.Mode == "Advanced" && _filter.Operator == "Between";
+                var bottom = between ? _value2.Bottom : Math.Max(_mode.Bottom, _value1.Bottom);
+                Height = bottom + Math.Max(6, (int)Math.Round(6 * Font.Height / 13.0)) + 2;
+            }
+            finally { _matchingHeights = false; }
+        }
+
+        protected override void OnLayout(LayoutEventArgs e)
+        {
+            base.OnLayout(e);
+            MatchModeHeight();
         }
 
         private void UpdateValueControls()
@@ -143,8 +170,13 @@ namespace SemanticTable
             _selectValues.Visible = basic;
             _selectValues.Text = _filter.Values.Count == 0 ? "Select values…" : _filter.Values.Count + " value(s) selected";
             _operator.Visible = !basic;
+            var needsValue = !DaxQueryBuilder.IsBlankOperator(_filter);
+            _value1.Enabled = needsValue;
+            _value2.Enabled = needsValue;
+            _selectValues.Enabled = needsValue;
             _value1.Visible = !basic;
             _value2.Visible = !basic && Convert.ToString(_operator.SelectedItem) == "Between";
+            MatchModeHeight();
         }
 
         private void ShowValuePicker()
@@ -335,7 +367,7 @@ namespace SemanticTable
                 return picker;
             }
 
-            var text = new TextBox { Left = left, Top = top, Width = 138, Text = saved ?? string.Empty };
+            var text = new TextBox { AutoSize = false, Left = left, Top = top, Width = 138, Text = saved ?? string.Empty };
             text.TextChanged += (_, __) => SetValue(text, text.Text);
             return text;
         }
@@ -347,6 +379,11 @@ namespace SemanticTable
             try
             {
                 _filter.Values.Clear();
+                if (DaxQueryBuilder.IsBlankOperator(_filter))
+                {
+                    _filter.Operator = "Equals";
+                    _operator.SelectedItem = "Equals";
+                }
                 _filter.Value = null;
                 _filter.Value2 = null;
                 if (_value1 is TextBox firstText) firstText.Text = string.Empty;
@@ -371,10 +408,10 @@ namespace SemanticTable
         private static string[] Operators(SemanticField field)
         {
             if (DaxQueryBuilder.IsDate(field)) return new[]
-                { "Equals", "Not Equals", "Greater Than", "Greater Than Or Equal", "Less Than", "Less Than Or Equal", "Between" };
+                { "Equals", "Not Equals", "Greater Than", "Greater Than Or Equal", "Less Than", "Less Than Or Equal", "Between", "Is Blank", "Is Not Blank" };
             if (DaxQueryBuilder.IsNumeric(field))
-                return new[] { "Equals", "Not Equals", "Greater Than", "Greater Than Or Equal", "Less Than", "Less Than Or Equal", "Between" };
-            return new[] { "Equals", "Not Equals", "Contains", "Starts With", "Ends With" };
+                return new[] { "Equals", "Not Equals", "Greater Than", "Greater Than Or Equal", "Less Than", "Less Than Or Equal", "Between", "Is Blank", "Is Not Blank" };
+            return new[] { "Equals", "Not Equals", "Contains", "Starts With", "Ends With", "Is Blank", "Is Not Blank" };
         }
     }
 }

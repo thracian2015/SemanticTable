@@ -75,6 +75,8 @@ namespace SemanticTable
             string condition;
             switch (filter.Operator)
             {
+                case "Is Blank": condition = "ISBLANK(" + column + ")"; break;
+                case "Is Not Blank": condition = "NOT(ISBLANK(" + column + "))"; break;
                 case "Not Equals": condition = column + " <> " + value; break;
                 case "Before": condition = column + " < " + value; break;
                 case "After": condition = column + " > " + value; break;
@@ -94,6 +96,7 @@ namespace SemanticTable
         internal static bool HasCondition(FieldFilter filter)
         {
             if (filter?.Field == null) return false;
+            if (IsBlankOperator(filter)) return true;
             if (string.Equals(filter.Mode, "Basic", StringComparison.OrdinalIgnoreCase))
                 return (filter.Values != null && filter.Values.Count > 0) || !string.IsNullOrWhiteSpace(filter.Value);
             if (string.IsNullOrWhiteSpace(filter.Value)) return false;
@@ -103,6 +106,9 @@ namespace SemanticTable
 
         internal static string ConditionSignature(FieldFilter filter) =>
             HasCondition(filter) ? FilterExpression(filter) : string.Empty;
+
+        internal static bool IsBlankOperator(FieldFilter filter) =>
+            filter?.Mode == "Advanced" && (filter.Operator == "Is Blank" || filter.Operator == "Is Not Blank");
 
         private static string Indent(string value, int spaces)
         {
