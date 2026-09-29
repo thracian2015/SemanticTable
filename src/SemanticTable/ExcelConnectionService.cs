@@ -183,7 +183,19 @@ namespace SemanticTable
                 try
                 {
                     DiagnosticLog.Write("[" + operationId + "] Calling QueryTable.Refresh(false). " + DescribeQueryState(queryTable));
-                    refreshed = queryTable.Refresh(false);
+                    refreshed = RefreshRecovery.Run(
+                        () => queryTable.Refresh(false),
+                        () =>
+                        {
+                            if (wroteQueryTable) queryTable.CommandText = previousQueryCommand;
+                            if (wroteConnection) oleDb.CommandText = previousConnectionCommand;
+                        },
+                        () =>
+                        {
+                            if (wroteQueryTable) queryTable.CommandText = CommandValueLike(previousQueryCommand, dax);
+                            if (wroteConnection) oleDb.CommandText = CommandValueLike(previousConnectionCommand, dax);
+                        },
+                        message => DiagnosticLog.Write("[" + operationId + "] " + message));
                     DiagnosticLog.Write("[" + operationId + "] QueryTable.Refresh returned " + refreshed + ". " + DescribeQueryState(queryTable));
                 }
                 catch (Exception ex)

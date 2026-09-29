@@ -12,6 +12,12 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
 - Added a tag-triggered GitHub Actions workflow that builds the x64 add-in and publishes the consistently named XLL release asset.
 
+## [0.1.0-beta.14] - 2026-09-29
+
+### Fixed
+
+- Recover once from Excel's generic connected-table refresh error by refreshing the previous query, then retrying the requested field change. Canceled refreshes are not retried, and failures retain the previous query.
+
 ## [0.1.0-beta.13] - 2026-09-14
 
 ### Changed
