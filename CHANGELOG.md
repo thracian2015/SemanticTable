@@ -12,6 +12,14 @@ The project follows [Semantic Versioning](https://semver.org/).
 - Updated installation and build documentation to link to Semantic Table's GitHub Releases page.
 - Added a tag-triggered GitHub Actions workflow that builds the x64 add-in and publishes the consistently named XLL release asset.
 
+## [0.1.0-beta.15] - 2026-10-06
+
+### Fixed
+
+- Discover fields using consumer OLE DB for OLAP schema rowsets so Viewer users with semantic-model Build permission do not require workspace Contributor access. Internal model definitions are optional enrichment.
+- Preserve model identifiers rather than translated captions, map OLE DB data types for DAX filters, and resolve hierarchy levels to actual columns. Without internal metadata, filter values sort by their own column.
+- Report connection and field-discovery failures accurately instead of labeling every metadata failure as a connection-open failure.
+
 ## [0.1.0-beta.14] - 2026-09-29
 
 ### Fixed

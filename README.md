@@ -53,9 +53,13 @@ The add-in appears on the **Semantic Table** ribbon tab. Select a cell in a supp
 
 ## Connections and authentication
 
-Semantic Table uses the live, authenticated MSOLAP/ADO connection associated with the Excel workbook. It does not implement a separate interactive sign-in flow and does not request or persist a separate Microsoft Entra access token.
+Semantic Table opens a native MSOLAP connection using the workbook's configured model target and the provider's account selection. It does not acquire or persist a separate Microsoft Entra access token.
 
 Semantic Table calls the native MSOLAP OLE DB provider directly through .NET Framework `System.Data.OleDb`. It does not use or require ADOMD.NET or Analysis Services Management Objects (AMO).
+
+Field discovery uses the consumer `MDSCHEMA` schema rowsets available to users with Read and Build permissions (including workspace Viewers with Build). Both new tables and existing Microsoft-created connected tables use this discovery path. RLS role membership, OLS, licensing, and tenant/capacity XMLA settings still apply.
+
+Internal `TMSCHEMA` metadata is optional enrichment for accounts permitted to read model definitions. If it is denied, the Fields pane retains consumer fields, display folders, data types, and resolvable hierarchies. Without internal sort-by-column metadata, filter values sort by the selected column itself; hierarchies whose source columns cannot be resolved are omitted rather than generating invalid DAX.
 
 For a new connection, the dialog starts with placeholders only:
 

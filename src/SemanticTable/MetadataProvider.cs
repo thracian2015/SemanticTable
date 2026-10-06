@@ -15,9 +15,8 @@ namespace SemanticTable
         IReadOnlyList<SemanticField> Load(ConnectedTableContext context);
     }
 
-    // Uses Excel's already-authenticated MSOLAP/ADO session. This avoids opening a
-    // second XMLA connection and therefore does not require the add-in to acquire,
-    // store, or refresh a separate Microsoft Entra access token.
+    // Opens native MSOLAP using its account selection. Consumer discovery supports
+    // Read + Build; internal model metadata is optional enrichment only.
     internal sealed class ExcelAdoMetadataProvider : IMetadataProvider
     {
         public IReadOnlyList<SemanticHierarchy> Hierarchies { get; private set; } = Array.Empty<SemanticHierarchy>();
@@ -57,22 +56,61 @@ namespace SemanticTable
                 {
                     context.MetadataConnectionString = connectionString;
                     connection.Open();
-                    var tables = ReadOleDbTables(connection);
-                    ReadOleDbFields(connection, tables, "$SYSTEM.TMSCHEMA_COLUMNS", SemanticFieldKind.Column, result);
-                    ReadOleDbFields(connection, tables, "$SYSTEM.TMSCHEMA_MEASURES", SemanticFieldKind.Measure, result);
-                    ResolveSortByColumns(result);
-                    Hierarchies = ReadOleDbHierarchies(connection, tables, result);
-                    result.RemoveAll(f => f.IsHidden);
+                    result = ReadConsumerMetadata(connection);
+                    try
+                    {
+                        var enriched = new List<SemanticField>();
+                        var tables = ReadOleDbTables(connection);
+                        ReadOleDbFields(connection, tables, "$SYSTEM.TMSCHEMA_COLUMNS", SemanticFieldKind.Column, enriched);
+                        ReadOleDbFields(connection, tables, "$SYSTEM.TMSCHEMA_MEASURES", SemanticFieldKind.Measure, enriched);
+                        ResolveSortByColumns(enriched);
+                        var enrichedHierarchies = ReadOleDbHierarchies(connection, tables, enriched);
+                        var byKey = enriched.Where(f => !f.IsHidden).ToDictionary(f => f.Key);
+                        result = result.Select(f => byKey.TryGetValue(f.Key, out var richer) ? richer : f).ToList();
+                        var visibleKeys = new HashSet<string>(result.Select(f => f.Key));
+                        Hierarchies = enrichedHierarchies.Where(h => h.Levels.All(f => visibleKeys.Contains(f.Key))).ToList();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Build users cannot read TMSCHEMA. Keep the complete consumer
+                        // result, including its types and hierarchy mappings.
+                        DiagnosticLog.Write("Internal metadata unavailable (" + ex.GetType().Name + "); using consumer schema discovery.");
+                    }
                 }
             }
             catch (Exception ex)
             {
                 throw new InvalidOperationException(
-                    "The native MSOLAP account-selection connection could not open the Power BI model. " + ex.Message +
+                    "Could not connect to the Power BI model or discover its fields. " + ex.Message +
                     "\r\n\r\nConnection target: " + ExcelConnectionService.DescribeTarget(context.ConnectionString), ex);
             }
             result.Sort((a, b) => string.Compare(a.Table + "\0" + a.Name, b.Table + "\0" + b.Name, StringComparison.CurrentCultureIgnoreCase));
             return result;
+        }
+
+        private List<SemanticField> ReadConsumerMetadata(OleDbConnection connection)
+        {
+            // Standard OLE DB for OLAP schema GUIDs (Windows SDK oledb.h).
+            using (var cubes = connection.GetOleDbSchemaTable(new Guid("c8b522d8-5cf3-11ce-ade5-00aa0044773d"), null))
+            {
+                var names = cubes?.Rows.Cast<DataRow>().Where(r => Convert.ToString(r["CUBE_TYPE"]) == "CUBE")
+                    .Select(r => Convert.ToString(r["CUBE_NAME"])).ToList() ?? new List<string>();
+                var cube = names.FirstOrDefault(n => string.Equals(n, "Model", StringComparison.OrdinalIgnoreCase));
+                if (cube == null && names.Count == 1) cube = names[0];
+                if (cube == null) throw new InvalidOperationException("Could not identify the tabular model cube for field discovery.");
+                // Restrict to one cube so perspectives cannot duplicate or leak fields.
+                var restrictions = new object[] { null, null, cube };
+                using (var attributes = connection.GetOleDbSchemaTable(new Guid("c8b522da-5cf3-11ce-ade5-00aa0044773d"), restrictions))
+                using (var levels = connection.GetOleDbSchemaTable(new Guid("c8b522db-5cf3-11ce-ade5-00aa0044773d"), restrictions))
+                using (var measures = connection.GetOleDbSchemaTable(new Guid("c8b522dc-5cf3-11ce-ade5-00aa0044773d"), restrictions))
+                {
+                    if (attributes == null || levels == null || measures == null)
+                        throw new InvalidOperationException("MSOLAP did not return the consumer field schema.");
+                    var fields = ConsumerMetadata.Parse(attributes, levels, measures, out var hierarchies);
+                    Hierarchies = hierarchies;
+                    return fields.ToList();
+                }
+            }
         }
 
         public IReadOnlyList<string> LoadDistinctValues(ConnectedTableContext context, SemanticField field, int limit = 500,
