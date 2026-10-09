@@ -45,9 +45,11 @@ namespace SemanticTable
             foreach (DataRow row in measures.Rows)
             {
                 if (!Visible(row, "MEASURE_IS_VISIBLE")) continue;
-                // Tabular explicit measures are calculated members. Cube-generated
-                // implicit aggregates do not have a corresponding DAX measure.
+                // Tabular explicit measures may use Unknown (0) or Calculated
+                // (127). Cube-generated implicit aggregates use function codes
+                // and do not have a corresponding DAX measure.
                 if (row.Table.Columns.Contains("MEASURE_AGGREGATOR") && !row.IsNull("MEASURE_AGGREGATOR")
+                    && Number(row, "MEASURE_AGGREGATOR") != 0
                     && Number(row, "MEASURE_AGGREGATOR") != 127) continue;
                 var parts = IdentifierParts(Text(row, "MEASURE_UNIQUE_NAME"));
                 var name = parts.Count >= 2 ? parts.Last() : Text(row, "MEASURE_NAME");

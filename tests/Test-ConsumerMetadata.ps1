@@ -43,6 +43,15 @@ public static class ConsumerMetadataTests
         fields = ConsumerMetadata.Parse(a, l, m, out hierarchies);
         Check(hierarchies.Count == 0 && fields.Count == 2, "Partial hierarchy exposed with inaccessible source column");
         Check(ConsumerMetadata.IdentifierParts("[A.B].[C]]D]").SequenceEqual(new[] { "A.B", "C]D" }), "Escaped multipart name parsing");
+        // A measure-only table has no visible attribute hierarchies. Tabular
+        // providers can report explicit measures with the Unknown aggregator (0).
+        m.Rows.Add("[Measures].[AUM]", "Translated AUM", "_Measures", "true", "Portfolio", "6", "0");
+        m.Rows.Add("[Measures].[Private AUM]", "Private AUM", "_Measures", "false", "", "6", "0");
+        fields = ConsumerMetadata.Parse(Table(), Table(), m, out hierarchies);
+        Check(fields.Count == 2 && fields.All(f => f.Kind == SemanticFieldKind.Measure), "Measure-only discovery lost measures or exposed implicit/hidden measures");
+        var aum = fields.Single(f => f.Name == "AUM");
+        Check(aum.Table == "_Measures" && aum.DisplayFolder == "Portfolio" && aum.DataType == "Decimal", "Measure-only home table/folder/type lost");
+        Check(hierarchies.Count == 0, "Measure-only discovery invented a hierarchy");
     }
 }
 '@
